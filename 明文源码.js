@@ -2,19 +2,18 @@
 // @ts-ignore
 import { connect } from 'cloudflare:sockets';
 
-// How to generate your own UUID:
-// [Windows] Press "Win + R", input cmd and run:  Powershell -NoExit -Command "[guid]::NewGuid()"
-let userID = '4367d60a-9e2f-46d3-95ff-b946db1e9ac7';
+
+let userID = '7c9e3c1d-a360-4429-9189-e45a98de7fde';
 let proxyIP = "proxyip.digitalocean.fxxk.dedyn.io";
 
-let dohURL = 'https://1.1.1.1/dns-query'; // https://cloudflare-dns.com/dns-query or https://dns.google/dns-query
+let dohURL = 'https://1.1.1.1/dns-query'; 
 
-// v2board api environment variables
+
 let nodeId = ''; // 1
 
-let apiToken = ''; //abcdefghijklmnopqrstuvwxyz123456
+let apiToken = ''; 
 
-let apiHost = ''; // api.v2board.com
+let apiHost = ''; 
 
 if (!isValidUUID(userID)) {
     throw new Error('uuid is not valid');
