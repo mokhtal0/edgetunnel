@@ -1,9 +1,9 @@
 
 import { connect } from 'cloudflare:sockets';
 
-let userID = 'd342d11e-d424-4583-b36e-524ab1f0afa4';
+let userID = '4367d60a-9e2f-46d3-95ff-b946db1e9ac7';
 
-let proxyIP = '';
+let proxyIP = 'proxyip.digitalocean.fxxk.dedyn.io';
 
 let socks5Address = '';
 
