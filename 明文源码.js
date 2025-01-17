@@ -1,16 +1,10 @@
-// <!--GAMFC-->version base on commit 58686d5d125194d34a1137913b3a64ddcf55872f, time is 2024-11-27 09:26:02 UTC<!--GAMFC-END-->.
-// @ts-ignore
+
 import { connect } from 'cloudflare:sockets';
 
-// How to generate your own UUID:
-// [Windows] Press "Win + R", input cmd and run:  Powershell -NoExit -Command "[guid]::NewGuid()"
 let userID = 'd342d11e-d424-4583-b36e-524ab1f0afa4';
 
 let proxyIP = '';
 
-// The user name and password do not contain special characters
-// Setting the address will ignore proxyIP
-// Example:  user:pass@host:port  or  host:port
 let socks5Address = '';
 
 if (!isValidUUID(userID)) {
@@ -21,12 +15,7 @@ let parsedSocks5Address = {};
 let enableSocks = false;
 
 export default {
-	/**
-	 * @param {import("@cloudflare/workers-types").Request} request
-	 * @param {{UUID: string, PROXYIP: string}} env
-	 * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
-	 * @returns {Promise<Response>}
-	 */
+	
 	async fetch(request, env, ctx) {
 		try {
 			userID = env.UUID || userID;
@@ -73,14 +62,8 @@ export default {
 
 
 
-/**
- * 
- * @param {import("@cloudflare/workers-types").Request} request
- */
 async function vlessOverWSHandler(request) {
 
-	/** @type {import("@cloudflare/workers-types").WebSocket[]} */
-	// @ts-ignore
 	const webSocketPair = new WebSocketPair();
 	const [client, webSocket] = Object.values(webSocketPair);
 
@@ -143,7 +126,7 @@ async function vlessOverWSHandler(request) {
 					return;
 				}
 			}
-			// ["version", "附加信息长度 N"]
+			
 			const vlessResponseHeader = new Uint8Array([vlessVersion[0], 0]);
 			const rawClientData = chunk.slice(rawDataIndex);
 
@@ -169,19 +152,6 @@ async function vlessOverWSHandler(request) {
 	});
 }
 
-/**
- * Handles outbound TCP connections.
- *
- * @param {any} remoteSocket
- * @param {number} addressType The remote address type to connect to.
- * @param {string} addressRemote The remote address to connect to.
- * @param {number} portRemote The remote port to connect to.
- * @param {Uint8Array} rawClientData The raw client data to write.
- * @param {import("@cloudflare/workers-types").WebSocket} webSocket The WebSocket to pass the remote socket to.
- * @param {Uint8Array} vlessResponseHeader The VLESS response header.
- * @param {function} log The logging function.
- * @returns {Promise<void>} The remote socket.
- */
 async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portRemote, rawClientData, webSocket, vlessResponseHeader, log,) {
 	async function connectAndWrite(address, port, socks = false) {
 		/** @type {import("@cloudflare/workers-types").Socket} */
@@ -271,9 +241,7 @@ function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
 			// https://streams.spec.whatwg.org/#example-rs-push-backpressure
 		},
 		cancel(reason) {
-			// 1. pipe WritableStream has error, this cancel will called, so ws handle server close into here
-			// 2. if readableStream is cancel, all controller.close/enqueue need skip,
-			// 3. but from testing controller.error still work even if readableStream is cancel
+			
 			if (readableStreamCancel) {
 				return;
 			}
@@ -287,15 +255,7 @@ function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
 
 }
 
-// https://xtls.github.io/development/protocols/vless.html
-// https://github.com/zizifn/excalidraw-backup/blob/main/v2ray-protocol.excalidraw
 
-/**
- * 
- * @param { ArrayBuffer} vlessBuffer 
- * @param {string} userID 
- * @returns 
- */
 function processVlessHeader(
 	vlessBuffer,
 	userID
@@ -409,14 +369,6 @@ function processVlessHeader(
 }
 
 
-/**
- * 
- * @param {import("@cloudflare/workers-types").Socket} remoteSocket 
- * @param {import("@cloudflare/workers-types").WebSocket} webSocket 
- * @param {ArrayBuffer} vlessResponseHeader 
- * @param {(() => Promise<void>) | null} retry
- * @param {*} log 
- */
 async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, retry, log) {
 	// remote--> ws
 	let remoteChunkCount = 0;
@@ -429,11 +381,6 @@ async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, re
 			new WritableStream({
 				start() {
 				},
-				/**
-				 * 
-				 * @param {Uint8Array} chunk 
-				 * @param {*} controller 
-				 */
 				async write(chunk, controller) {
 					hasIncomingData = true;
 					// remoteChunkCount++;
@@ -446,11 +393,7 @@ async function remoteSocketToWS(remoteSocket, webSocket, vlessResponseHeader, re
 						webSocket.send(await new Blob([vlessHeader, chunk]).arrayBuffer());
 						vlessHeader = null;
 					} else {
-						// seems no need rate limit this, CF seems fix this??..
-						// if (remoteChunkCount > 20000) {
-						// 	// cf one package is 4096 byte(4kb),  4096 * 20000 = 80M
-						// 	await delay(1);
-						// }
+						
 						webSocket.send(chunk);
 					}
 				},
@@ -669,23 +612,7 @@ async function socks5Connect(addressType, addressRemote, portRemote, log) {
 		}
 	}
 
-	// Request data format (Worker -> Socks Server):
-	// +----+-----+-------+------+----------+----------+
-	// |VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
-	// +----+-----+-------+------+----------+----------+
-	// | 1  |  1  | X'00' |  1   | Variable |    2     |
-	// +----+-----+-------+------+----------+----------+
-	// ATYP: address type of following address
-	// 0x01: IPv4 address
-	// 0x03: Domain name
-	// 0x04: IPv6 address
-	// DST.ADDR: desired destination address
-	// DST.PORT: desired destination port in network octet order
-
-	// addressType
-	// 1--> ipv4  addressLength =4
-	// 2--> domain name
-	// 3--> ipv6  addressLength =16
+	
 	let DSTADDR;	// DSTADDR = ATYP + DST.ADDR
 	switch (addressType) {
 		case 1:
@@ -712,12 +639,6 @@ async function socks5Connect(addressType, addressRemote, portRemote, log) {
 	log('sent socks request');
 
 	res = (await reader.read()).value;
-	// Response format (Socks Server -> Worker):
-	//  +----+-----+-------+------+----------+----------+
-	// |VER | REP |  RSV  | ATYP | BND.ADDR | BND.PORT |
-	// +----+-----+-------+------+----------+----------+
-	// | 1  |  1  | X'00' |  1   | Variable |    2     |
-	// +----+-----+-------+------+----------+----------+
 	if (res[1] === 0x00) {
 		log("socks connection opened");
 	} else {
@@ -776,30 +697,8 @@ function getVLESSConfig(userID, hostName) {
 	`?encryption=none&security=tls&sni=${hostName}&fp=randomized&type=ws&host=${hostName}&path=%2F%3Fed%3D2048#${hostName}`;
 	
 	return `
-################################################################
-v2ray
----------------------------------------------------------------
-${vlessMain}
----------------------------------------------------------------
-################################################################
-clash-meta
----------------------------------------------------------------
-- type: vless
-  name: ${hostName}
-  server: ${hostName}
-  port: 443
-  uuid: ${userID}
-  network: ws
-  tls: true
-  udp: false
-  sni: ${hostName}
-  client-fingerprint: chrome
-  ws-opts:
-    path: "/?ed=2048"
-    headers:
-      host: ${hostName}
----------------------------------------------------------------
-################################################################
+ Are you ok?
+ 😂😂
 `;
 }
 
